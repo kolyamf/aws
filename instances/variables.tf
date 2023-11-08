@@ -1,0 +1,14 @@
+variable "public_subnet_id" {}
+variable "web_sec_group_id" {}
+variable "bastion_ssh_sg_id" {}
+variable "nat_sec_group_id" {}
+variable "region" {}
+variable "nat_instance_type" {}
+variable "key_name" {}
+variable "vpc_name" {}
+variable "web_instance_type" {}
+variable "subnets_az" {}
+variable "private_subnets_id" {}
+variable "bf_ssh_sg_id" {}
+variable "nat_ami" {}
+variable "web_ami" {}
