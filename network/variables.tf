@@ -1,4 +1,5 @@
 variable "vpc_name" {}
+variable "vpc_id" {}
 variable "vpc_cidr" {}
 variable "nat_id" {}
 variable "private_subnet_instances" {}

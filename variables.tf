@@ -1,6 +1,10 @@
 variable "region" { default = "us-east-1" }
 
 # vpc variables #
+variable "create_new_vpc" {
+  type = bool
+}
+
 variable "vpc_name" {
   description = "name of the VPC"
   default     = "newcomer-tasks"
