@@ -10,10 +10,23 @@ provider "aws" {
 locals {
   nat_ami = data.aws_ami.ubuntu.id
   web_ami = data.aws_ami.ubuntu.id
+  vpc_id = var.create_new_vpc ? module.new_vpc.vpc_id : data.aws_vpc.default.id
+}
+
+output "vpc_name" {
+  value = local.vpc_id
+}
+
+module "new_vpc" {
+  source         = "./network/new_vpc"
+  vpc_name       = var.vpc_name
+  vpc_cidr       = var.vpc_cidr
+  create_new_vpc = var.create_new_vpc
 }
 
 module "network" {
   source                   = "./network"
+  vpc_id                   = local.vpc_id
   vpc_name                 = var.vpc_name
   vpc_cidr                 = var.vpc_cidr
   nat_id                   = module.instances.nat_id

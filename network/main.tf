@@ -1,13 +1,6 @@
-# vpc section #
-resource "aws_vpc" "tasks_vpc" {
-    cidr_block = var.vpc_cidr
-    tags = {
-        Name = "${var.vpc_name}"
-  }
-}
 # internet gateway #
 resource "aws_internet_gateway" "tasks_igw" {
-    vpc_id = aws_vpc.tasks_vpc.id
+    vpc_id = var.vpc_id
     tags = {
         Name = "${var.vpc_name}-igw"
   }
@@ -15,7 +8,7 @@ resource "aws_internet_gateway" "tasks_igw" {
 # public subnet section #
 resource "aws_subnet" "public_subnet" {
   count             = length(var.subnets_az)
-  vpc_id            = aws_vpc.tasks_vpc.id
+  vpc_id            = var.vpc_id
   availability_zone = element(var.subnets_az, count.index)
   cidr_block        = cidrsubnet(aws_vpc.tasks_vpc.cidr_block, 8, count.index+5)
   tags = {
@@ -23,7 +16,7 @@ resource "aws_subnet" "public_subnet" {
   }
 }
 resource "aws_route_table" "tasks_pub_route" {
-    vpc_id = aws_vpc.tasks_vpc.id
+    vpc_id = var.vpc_id
     route {
         cidr_block = "0.0.0.0/0"
         gateway_id = aws_internet_gateway.tasks_igw.id
@@ -41,7 +34,7 @@ resource "aws_route_table_association" "tasks_pub_association" {
 # private subnets section #
 resource "aws_subnet" "private_subnets" {
   count             = length(var.subnets_az)
-  vpc_id            = aws_vpc.tasks_vpc.id
+  vpc_id            = var.vpc_id
   availability_zone = element(var.subnets_az, count.index)
   cidr_block        = cidrsubnet(aws_vpc.tasks_vpc.cidr_block, 8, count.index+10)
   tags = {
@@ -49,7 +42,7 @@ resource "aws_subnet" "private_subnets" {
   }
 }
 resource "aws_route_table" "tasks_priv_route" {
-    vpc_id = aws_vpc.tasks_vpc.id
+    vpc_id = var.vpc_id
 
     route {
         cidr_block = "0.0.0.0/0"
@@ -68,7 +61,7 @@ resource "aws_route_table_association" "tasks_priv_association" {
 resource "aws_security_group" "nat_sec_group" {
     name = "${var.vpc_name}-nat-sg"
     description = "NAT security group"
-    vpc_id = aws_vpc.tasks_vpc.id
+    vpc_id = var.vpc_id
     # Allow HTTP, HTTPS, SSH #
     dynamic "ingress" {
     iterator = port
@@ -94,7 +87,7 @@ resource "aws_security_group" "nat_sec_group" {
 resource "aws_security_group" "web_sec_group" {
     name = "${var.vpc_name}-web-sg"
     description = "WEB security group"
-    vpc_id = aws_vpc.tasks_vpc.id
+    vpc_id = var.vpc_id
     # Allow HTTP #
     ingress {
         from_port = 80
@@ -109,7 +102,7 @@ resource "aws_security_group" "web_sec_group" {
 resource "aws_security_group" "bastion_ssh_sg" {
     name = "${var.vpc_name}-bastion-sg"
     description = "bastion security group"
-    vpc_id = aws_vpc.tasks_vpc.id
+    vpc_id = var.vpc_id
     # Allow SSH #
     ingress {
         from_port = 22
@@ -131,7 +124,7 @@ resource "aws_security_group" "bastion_ssh_sg" {
 resource "aws_security_group" "bf_ssh_sg" {
     name = "${var.vpc_name}-bastion-fsg"
     description = "ssh-from bastion"
-    vpc_id = aws_vpc.tasks_vpc.id
+    vpc_id = var.vpc_id
     # Allow connect from bastion via SSH # 
     ingress {
     from_port = 22
@@ -156,7 +149,7 @@ resource "aws_security_group" "bf_ssh_sg" {
 resource "aws_security_group" "alb_sg" {
   name        = "${var.vpc_name}-ALB-SG"
   description = "ALB SG"
-  vpc_id = aws_vpc.tasks_vpc.id
+  vpc_id = var.vpc_id
    tags = {
     Name = "${var.vpc_name}-ALB-SG"
   }
@@ -178,7 +171,7 @@ resource "aws_security_group" "alb_sg" {
 # ACL section #
 resource "aws_network_acl" "public" {
   count = length(var.subnets_az) > 0 ? 1 : 0
-  vpc_id = aws_vpc.tasks_vpc.id
+  vpc_id = var.vpc_id
   subnet_ids = aws_subnet.public_subnet.*.id
   tags = {
     Name = "${var.vpc_name}-public-acl"
@@ -209,7 +202,7 @@ resource "aws_network_acl_rule" "public_outbound" {
 }
 resource "aws_network_acl" "private" {
   count = length(var.subnets_az) > 0 ? 1 : 0
-  vpc_id = aws_vpc.tasks_vpc.id
+  vpc_id = var.vpc_id
   subnet_ids = aws_subnet.private_subnets.*.id
   tags = {
     Name = "${var.vpc_name}-private-acl"
@@ -253,7 +246,7 @@ resource "aws_lb_target_group" "tasks_tg" {
   name               = "${var.vpc_name}-tg"
   port               = 80
   protocol           = "HTTP"
-  vpc_id             = aws_vpc.tasks_vpc.id
+  vpc_id             = var.vpc_id
   tags = {
     Name = "${var.vpc_name}-TG"
   }
